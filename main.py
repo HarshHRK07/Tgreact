@@ -3,6 +3,7 @@ import requests
 import random
 import json
 import threading
+from flask import Flask
 
 # Load bot tokens from token.txt
 def load_tokens(filename):
@@ -13,10 +14,16 @@ def load_tokens(filename):
 # Array of emojis
 my_emojis = ["👍", "❤", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🎉", "🤩", "🙏", "👌", "😍", "❤‍🔥", "🌚", "💯", "🤣", "💔", "😐", "🇮🇳", "😈", "😴", "😭", "🤓", "😇", "🤝", "🤗", "🫡", "🤪", "🗿", "🆒", "💘", "😘", "😎", "🇳🇵"]
 
+# Additional emojis
+more_emojis = ["🎈", "🍕", "🌟", "🚀", "🐱", "🌈", "💡", "🍔", "🎶", "📚", "🎨", "⚽", "🍦", "🌻", "🚲", "🏖️", "🎮", "🍩", "🍹", "💻", "🔑", "🎁", "🏆", "📷", "⏰", "💼", "🎳", "🚗", "🎭", "🍓", "🎊", "📝", "💰", "🛫", "🍀", "📱", "🌊"]
+
+# Combine emojis
+all_emojis = my_emojis + more_emojis
+
 # Function to send reaction using provided URL
 def send_reaction(bot, chat_id, message_id):
     # Select a random emoji
-    do_emoji = random.choice(my_emojis)
+    do_emoji = random.choice(all_emojis)
     
     # Set up the reaction data
     data = {
@@ -49,6 +56,14 @@ def handle_message(bot):
     # Start polling
     bot.polling()
 
+# Flask app initialization
+app = Flask(__name__)
+
+# Main route to keep the script alive
+@app.route('/')
+def index():
+    return 'Server is running!'
+
 # Main function
 if __name__ == "__main__":
     # Load bot tokens
@@ -64,3 +79,6 @@ if __name__ == "__main__":
         threads.append(thread)
         thread.start()
     
+    # Start Flask app
+    app.run(host='0.0.0.0', port=8080)
+            
