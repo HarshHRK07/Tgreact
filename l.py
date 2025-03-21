@@ -164,7 +164,7 @@ def check_limits(user_id):
 # Loading animation
 def update_loading_bar(chat_id, message_id, start_time, done_event):
     bar_length = 20
-    stages = ["𝐏𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠 𝐩𝐚𝐲𝐦𝐞𝐧𝐭...", "𝐅𝐞𝐭𝐜𝐡𝐢𝐧𝐠 𝐁𝐈𝐍 𝐢𝐧𝐟�{o...", "𝐅𝐢𝐧𝐚𝐥𝐢𝐳𝐢𝐧𝐠..."]
+    stages = ["𝐏𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠 𝐩𝐚𝐲𝐦𝐞𝐧𝐭...", "𝐅𝐞𝐭𝐜𝐡𝐢𝐧𝐠 𝐁𝐈𝐍 𝐢𝐧𝐟𝐨...", "𝐅𝐢𝐧𝐚𝐥𝐢𝐳𝐢𝐧𝐠..."]
     while not done_event.is_set():
         elapsed = time.time() - start_time
         if elapsed > 15:
@@ -224,10 +224,10 @@ def handle_info(message):
         response = (
             f"👤 𝗨𝘀𝗲𝗿 𝗜𝗻𝗳𝗼 {user_id}\n"
             f"📛 𝗣𝗹𝗮𝗻: {plan['name']}\n"
-            f"⏳ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: {cooldown} 𝘀𝗲𝗰𝗼𝗻𝗱𝘀\n"
-            f"🚀 𝗛𝗼𝘂𝗿𝗹𝘆 𝗟𝗶𝗺𝗶𝘁: {hourly_limit}\n"
-            f"✅ 𝗥𝗲𝗺𝗮𝗶𝗻𝗶𝗻𝗴 𝗖𝗵𝗲𝗰𝗸𝘀: {remaining_checks}\n"
-            f"🔄 𝗟𝗶𝗺𝗶𝘁 𝗥𝗲𝘀𝗲𝘁𝘀 𝗜𝗻: {time_until_reset}"
+            f"⏳ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: {plan['cooldown']} 𝘀𝗲𝗰𝗼𝗻𝗱𝘀\n"
+            f"🚀 𝗛𝗼𝘂𝗿𝗹𝘆 𝗟𝗶𝗺𝗶𝘁: {plan['limit']}\n"
+            f"✅ 𝗥𝗲𝗺𝗮𝗶𝗻𝗶𝗻𝗴 𝗖𝗵𝗲𝗰𝗸𝘀: {remaining}\n"
+            f"🔄 𝗟𝗶𝗺𝗶𝘁 𝗥𝗲𝘀𝗲𝘁𝘀 𝗜𝗻: {reset_time}"
         )
     
     else:
@@ -235,7 +235,7 @@ def handle_info(message):
         checks = user_info.get("checks", [])
         valid_checks = [t for t in checks if (now - datetime.fromisoformat(t)).total_seconds() < 3600]
         remaining = max(FREE_LIMIT - len(valid_checks), 0)
-        reset_time = str((datetime.fromisoformat(valid_checks[0]) + timedelta(hours=1) - now).seconds // 60) + " 𝐦𝐢�{n" if valid_checks else "𝐍𝐨𝐰"
+        reset_time = str((datetime.fromisoformat(valid_checks[0]) + timedelta(hours=1) - now).seconds // 60) + " 𝐦𝐢𝐧" if valid_checks else "𝐍𝐨𝐰"
         
         response = (
             f"👤 𝐔𝐬𝐞𝐫 𝐈𝐧𝐟𝐨: {user_id}\n"
@@ -274,9 +274,9 @@ def handle_hrk(message):
         if not match:
             return bot.reply_to(message, "❌ 𝐈𝐧𝐯𝐚𝐥𝐢𝐝 𝐟𝐨𝐫𝐦𝐚𝐭! 𝐔𝐬𝐞: /𝐡𝐫𝐤 𝟒𝟗𝟐𝟗𝟒𝟗𝟖𝟒𝟕𝟏𝟗𝟒𝟗𝟎𝟎𝟒|𝟎𝟒|𝟐𝟗|𝟒𝟔𝟖")
         
-        card, month, year, cvv = match.groups()
-        month = month.zfill(2)
-        year = year[-2:] if len(year) == 4 else year
+        card_number, exp_month, exp_year, cvv = match.groups()
+        exp_month = exp_month.zfill(2)
+        exp_year = exp_year[-2:] if len(exp_year) == 4 else exp_year
 
         allowed, reason = check_limits(message.from_user.id)
         if not allowed:
@@ -284,25 +284,27 @@ def handle_hrk(message):
 
         start_time = time.time()
         done_event = threading.Event()
-        msg = bot.reply_to(message, "⏳ 𝐏𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠...")
+        loading_message = bot.reply_to(message, "⏳ 𝐏𝐫𝐨𝐜𝐞𝐬𝐬𝐢𝐧𝐠...")
         
-        threading.Thread(
+        loading_thread = threading.Thread(
             target=update_loading_bar,
-            args=(message.chat.id, msg.message_id, start_time, done_event)
-        ).start()
+            args=(message.chat.id, loading_message.message_id, start_time, done_event)
+        )
+        loading_thread.start()
 
-        result = process_payment(card, month, year, cvv)
-        bin_info = get_bin_info(card)
-        elapsed = f"{time.time()-start_time:.2f}𝐬"
-
-           
-        if response_msg == "𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅":
+        response_msg = process_payment(card_number, exp_month, exp_year, cvv)
+        bin_info = get_bin_info(card_number)
+        time_taken = f"{time.time()-start_time:.2f}𝐬"
+        
+        done_event.set()
+        
+        if response_msg == "𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝 ✅":
             response = (
                 f"𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅\n\n"
                 f"𝗖𝗖 ⇾ {card_number}|{exp_month}|{exp_year}|{cvv}\n"
                 f"𝗚𝗮𝘁𝗲𝘄𝗮𝘆 ⇾ 𝗛𝗥𝗞'𝗦 𝗦𝗣𝗘𝗖𝗜𝗔𝗟 𝗔𝗨𝗧𝗛\n"
                 f"𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲 ⇾ {response_msg}\n\n"
-                f"𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {bin_info['brand']} - {bin_info['type']} - {bin_info['sub_type']}\n"
+                f"𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {bin_info['brand']} - {bin_info['type']}\n"
                 f"𝗕𝗮𝗻𝗸: {bin_info['bank']}\n"
                 f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info['country']}\n\n"
                 f"𝗧𝗼𝗼𝗸 {time_taken}"
@@ -313,7 +315,7 @@ def handle_hrk(message):
                 f"𝗖𝗖 ⇾ {card_number}|{exp_month}|{exp_year}|{cvv}\n"
                 f"𝗚𝗮𝘁𝗲𝘄𝗮𝘆 ⇾ 𝗛𝗥𝗞'𝗦 𝗦𝗣𝗘𝗖𝗜𝗔𝗟 𝗔𝗨𝗧𝗛\n"
                 f"𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲 ⇾ {response_msg}\n\n"
-                f"𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {bin_info['brand']} - {bin_info['type']} - {bin_info['sub_type']}\n"
+                f"𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {bin_info['brand']} - {bin_info['type']}\n"
                 f"𝗕𝗮𝗻𝗸: {bin_info['bank']}\n"
                 f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info['country']}\n\n"
                 f"𝗧𝗼𝗼𝗸 {time_taken}"
@@ -322,9 +324,10 @@ def handle_hrk(message):
         bot.edit_message_text(chat_id=message.chat.id, message_id=loading_message.message_id, text=response)
     
     except Exception as e:
-        done_event.set()  # Safe to call since it's initialized outside
-        bot.reply_to(message, "𝗔𝗻 𝗲𝗿𝗿𝗼𝗿 𝗼𝗰𝗰𝘂𝗿𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝘁𝗿𝘆 𝗮𝗴𝗮𝗶𝗻.")
-        print(f"Error processing command from user {user_id}: {str(e)}")
+        done_event.set()  # Safe to call since it's initialized above
+        bot.reply_to(message, f"𝗔𝗻 𝗲𝗿𝗿𝗼𝗿 𝗼𝗰𝗰𝘂𝗿𝗿𝗲𝗱: {str(e)}")
+        print(f"Error processing command from user {message.from_user.id}: {str(e)}")
+
 # Start bot
 print("🟢 Bot is running...")
 bot.polling()
