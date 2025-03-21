@@ -186,16 +186,16 @@ def update_loading_bar(chat_id, message_id, start_time, done_event):
 @bot.message_handler(commands=['start', 'START', '.start', '!start'])
 def handle_start(message):
     response = (
-        f"👋 𝐖𝐞𝐥𝐜𝐨𝐦𝐞 𝐭𝐨 𝐇𝐑𝐊'𝐬 𝐁𝐨𝐭, {message.from_user.first_name}!\n\n"
-        f"⚡ 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬:\n"
-        f"📌 /𝐡𝐫𝐤 𝐜𝐚𝐫𝐝|𝐌𝐌|𝐘𝐘𝐘𝐘|𝐂𝐕𝐕 - 𝐂𝐡𝐞𝐜𝐤 𝐜𝐚𝐫𝐝\n"
-        f"📌 /𝐢𝐧𝐟𝐨 - 𝐏𝐥𝐚𝐧 𝐢𝐧𝐟𝐨\n"
-        f"🚀 𝐏𝐫𝐞𝐦𝐢𝐮𝐦 𝐏𝐥𝐚𝐧�{s:\n"
-        f"🔹 𝐁𝐚𝐬𝐢𝐜: 𝟏𝟓𝐬 𝐜𝐨𝐨𝐥𝐝𝐨𝐰𝐧, 𝟓𝟎/𝐡𝐫\n"
-        f"🔹 𝐌𝐢𝐝-𝐓𝐢𝐞𝐫: 𝟏𝟑𝐬 𝐜𝐨𝐨𝐥𝐝𝐨𝐰𝐧, 𝟏𝟎𝟎/𝐡𝐫\n"
-        f"🔹 𝐏𝐫𝐞𝐦𝐢𝐮𝐦: 𝟕𝐬 𝐜�{o𝐥𝐝𝐨𝐰𝐧, 𝟏𝟓𝟎/𝐡𝐫\n"
-        f"🔄 𝐅𝐫𝐞𝐞: 𝟑𝟎𝐬 𝐜𝐨𝐨𝐥𝐝𝐨𝐰𝐧, 𝟏𝟎/𝐡𝐫"
-   )
+        f"👋 𝗪𝗲𝗹𝗰𝗼𝗺𝗲 𝘁𝗼 𝗛𝗥𝗞'𝘀 𝗕𝗼𝘁, {message.from_user.first_name}!\n\n"
+        f"⚡ 𝗖𝗼𝗺𝗺𝗮𝗻𝗱𝘀:\n"
+        f"📌 /𝗵𝗿𝗸 𝗰𝗮𝗿𝗱|𝗠𝗠|𝗬𝗬𝗬𝗬|𝗖𝗩𝗩 - 𝗖𝗵𝗲𝗰𝗸 𝗰𝗮𝗿𝗱\n"
+        f"📌 /𝗶𝗻𝗳𝗼 - 𝗣𝗹𝗮𝗻 𝗶𝗻𝗳𝗼\n"
+        f"🚀 𝗣𝗿𝗲𝗺𝗶𝘂𝗺 𝗣𝗹𝗮𝗻𝘀:\n"
+        f"🔹 𝗕𝗮𝘀𝗶𝗰: 𝟭𝟱𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟱𝟬/𝗵𝗿\n"
+        f"🔹 𝗠𝗶𝗱-𝗧𝗶𝗲𝗿: 𝟭𝟯𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟭𝟬𝟬/𝗵𝗿\n"
+        f"🔹 𝗧𝗼𝗽-𝗧𝗶𝗲𝗿: 𝟳𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟭𝟱𝟬/𝗵𝗿\n"
+        f"🔄 𝗙𝗿𝗲𝗲: 𝟯𝟬𝘀 𝗰𝗼𝗼𝗹𝗱𝗼𝘄𝗻, 𝟭𝟬/𝗵𝗿"
+    )
     bot.reply_to(message, response)
 
 @bot.message_handler(commands=['info', 'INFO', '.info', '!info'])
@@ -206,12 +206,12 @@ def handle_info(message):
 
     if int(user_id) == OWNER_ID:
         response = (
-            f"👤 𝐔𝐬𝐞𝐫 𝐈𝐧𝐟𝐨: {user_id}\n"
-            f"📛 𝐏𝐥𝐚𝐧: 𝐎𝐰𝐧𝐞𝐫 (𝐔𝐧𝐥𝐢𝐦𝐢𝐭𝐞𝐝 𝐀𝐜𝐜𝐞𝐬𝐬 🚀)\n"
-            f"⏳ 𝐂�{o𝐥𝐝𝐨𝐰𝐧: 𝐍𝐨𝐧𝐞\n"
-            f"🚀 𝐇𝐨𝐮𝐫𝐥𝐲 𝐋𝐢𝐦𝐢𝐭: 𝐈𝐧𝐟𝐢𝐧𝐢𝐭𝐞\n"
-            f"✅ 𝐑𝐞𝐦𝐚𝐢𝐧𝐢𝐧𝐠 𝐂𝐡𝐞𝐜𝐤𝐬: 𝐔𝐧𝐥𝐢𝐦𝐢𝐭𝐞𝐝\n"
-            f"🔄 𝐋𝐢𝐦𝐢𝐭 𝐑𝐞𝐬𝐞𝐭𝐬 𝐈𝐧: 𝐍/𝐀"
+            f"👤 𝗨𝘀𝗲𝗿 𝗜𝗻𝗳𝗼 {user_id}\n"
+            f"📛 𝗣𝗹𝗮𝗻: 𝗢𝘄𝗻𝗲𝗿 (𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱 𝗔𝗰𝗰𝗲𝘀𝘀 🚀)\n"
+            f"⏳ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: 𝗡𝗼𝗻𝗲\n"
+            f"🚀 𝗛𝗼𝘂𝗿𝗹𝘆 𝗟𝗶𝗺𝗶𝘁: 𝗜𝗻𝗳𝗶𝗻𝗶𝘁𝗲\n"
+            f"✅ 𝗥𝗲𝗺𝗮𝗶𝗻𝗶𝗻𝗴 𝗖𝗵𝗲𝗰𝗸𝘀: 𝗨𝗻𝗹𝗶𝗺𝗶𝘁𝗲𝗱\n"
+            f"🔄 𝗟𝗶𝗺𝗶𝘁 𝗥𝗲𝘀𝗲𝘁𝘀 𝗜𝗻: 𝗡𝗼𝘁 𝗔𝗽𝗽𝗹𝗶𝗰𝗮𝗯𝗹𝗲"
         )
     elif user_id in user_data["premium_users"]:
         user_info = user_data["premium_users"][user_id]
@@ -222,13 +222,14 @@ def handle_info(message):
         reset_time = str((datetime.fromisoformat(valid_checks[0]) + timedelta(hours=1) - now).seconds // 60) + " 𝐦𝐢𝐧" if valid_checks else "𝐍𝐨𝐰"
         
         response = (
-            f"👤 𝐔𝐬𝐞𝐫 𝐈𝐧𝐟𝐨: {user_id}\n"
-            f"📛 𝐏𝐥𝐚𝐧: {plan['name']}\n"
-            f"⏳ 𝐂𝐨𝐨𝐥𝐝𝐨𝐰𝐧: {plan['cooldown']}𝐬\n"
-            f"🚀 𝐇𝐨𝐮𝐫𝐥𝐲 𝐋𝐢𝐦𝐢𝐭: {plan['limit']}\n"
-            f"✅ 𝐑𝐞𝐦𝐚𝐢𝐧𝐢𝐧𝐠 𝐂𝐡�{e𝐜𝐤𝐬: {remaining}\n"
-            f"🔄 𝐋𝐢𝐦𝐢𝐭 𝐑𝐞𝐬𝐞𝐭𝐬 𝐈𝐧: {reset_time}"
+            f"👤 𝗨𝘀𝗲𝗿 𝗜𝗻𝗳𝗼 {user_id}\n"
+            f"📛 𝗣𝗹𝗮𝗻: {plan['name']}\n"
+            f"⏳ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: {cooldown} 𝘀𝗲𝗰𝗼𝗻𝗱𝘀\n"
+            f"🚀 𝗛𝗼𝘂𝗿𝗹𝘆 𝗟𝗶𝗺𝗶𝘁: {hourly_limit}\n"
+            f"✅ 𝗥𝗲𝗺𝗮𝗶𝗻𝗶𝗻𝗴 𝗖𝗵𝗲𝗰𝗸𝘀: {remaining_checks}\n"
+            f"🔄 𝗟𝗶𝗺𝗶𝘁 𝗥𝗲𝘀𝗲𝘁𝘀 𝗜𝗻: {time_until_reset}"
         )
+    
     else:
         user_info = user_data["free_users"].get(user_id, {})
         checks = user_info.get("checks", [])
@@ -294,23 +295,36 @@ def handle_hrk(message):
         bin_info = get_bin_info(card)
         elapsed = f"{time.time()-start_time:.2f}𝐬"
 
-        response = (
-            f"{'✅ 𝐀𝐩𝐩𝐫𝐨𝐯𝐞𝐝' if 'Approved' in result else '❌ 𝐃𝐞𝐜𝐥𝐢𝐧𝐞�{d'}\n\n"
-            f"𝐂𝐂: {card}|{month}|{year}|{cvv}\n"
-            f"𝐆𝐚𝐭𝐞𝐰𝐚𝐲: 𝐇𝐑𝐊 𝐒𝐩𝐞𝐜𝐢𝐚𝐥 𝐀𝐮𝐭𝐡\n"
-            f"𝐑𝐞𝐬𝐩𝐨𝐧𝐬𝐞: {result}\n\n"
-            f"𝐁𝐈𝐍: {bin_info['brand']} - {bin_info['type']}\n"
-            f"𝐁𝐚𝐧𝐤: {bin_info['bank']}\n"
-            f"𝐂𝐨𝐮𝐧𝐭𝐫𝐲: {bin_info['country']}\n\n"
-            f"𝐓𝐢𝐦�{e: {elapsed}"
-        )
+           
+        if response_msg == "𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅":
+            response = (
+                f"𝗔𝗽𝗽𝗿𝗼𝘃𝗲𝗱 ✅\n\n"
+                f"𝗖𝗖 ⇾ {card_number}|{exp_month}|{exp_year}|{cvv}\n"
+                f"𝗚𝗮𝘁𝗲𝘄𝗮𝘆 ⇾ 𝗛𝗥𝗞'𝗦 𝗦𝗣𝗘𝗖𝗜𝗔𝗟 𝗔𝗨𝗧𝗛\n"
+                f"𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲 ⇾ {response_msg}\n\n"
+                f"𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {bin_info['brand']} - {bin_info['type']} - {bin_info['sub_type']}\n"
+                f"𝗕𝗮𝗻𝗸: {bin_info['bank']}\n"
+                f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info['country']}\n\n"
+                f"𝗧𝗼𝗼𝗸 {time_taken}"
+            )
+        else:
+            response = (
+                f"𝗗𝗲𝗰𝗹𝗶𝗻𝗲𝗱 ❌\n\n"
+                f"𝗖𝗖 ⇾ {card_number}|{exp_month}|{exp_year}|{cvv}\n"
+                f"𝗚𝗮𝘁𝗲𝘄𝗮𝘆 ⇾ 𝗛𝗥𝗞'𝗦 𝗦𝗣𝗘𝗖𝗜𝗔𝗟 𝗔𝗨𝗧𝗛\n"
+                f"𝗥𝗲𝘀𝗽𝗼𝗻𝘀𝗲 ⇾ {response_msg}\n\n"
+                f"𝗕𝗜𝗡 𝗜𝗻𝗳𝗼: {bin_info['brand']} - {bin_info['type']} - {bin_info['sub_type']}\n"
+                f"𝗕𝗮𝗻𝗸: {bin_info['bank']}\n"
+                f"𝗖𝗼𝘂𝗻𝘁𝗿𝘆: {bin_info['country']}\n\n"
+                f"𝗧𝗼𝗼𝗸 {time_taken}"
+            )
         
-        done_event.set()
-        bot.edit_message_text(response, message.chat.id, msg.message_id)
-
+        bot.edit_message_text(chat_id=message.chat.id, message_id=loading_message.message_id, text=response)
+    
     except Exception as e:
-        bot.reply_to(message, f"❌ 𝐄𝐫𝐫𝐨𝐫: {str(e)}")
-
+        done_event.set()  # Safe to call since it's initialized outside
+        bot.reply_to(message, "𝗔𝗻 𝗲𝗿𝗿𝗼𝗿 𝗼𝗰𝗰𝘂𝗿𝗿𝗲𝗱. 𝗣𝗹𝗲𝗮𝘀𝗲 𝘁𝗿𝘆 𝗮𝗴𝗮𝗶𝗻.")
+        print(f"Error processing command from user {user_id}: {str(e)}")
 # Start bot
 print("🟢 Bot is running...")
 bot.polling()
