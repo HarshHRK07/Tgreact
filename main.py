@@ -2,7 +2,7 @@ import telebot
 from cmd import handle_hrk, handle_plan, handle_info, handle_start, handle_stripe
 
 #Initialize the Telegram bot
-bot = telebot.TeleBot("6751940696:AAFz_8qF6sI24EJzU3sv367eMkcjVJsBlTU")
+bot = telebot.TeleBot("7195510626:AAHdF4spBrcmWPPx9-1gogU1yKM1Rs5qe-s")
 
 
 # Register command handlers with bot instance explicitly passed
