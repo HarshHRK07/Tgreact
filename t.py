@@ -10,7 +10,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 # Telegram Bot Token (replace with your bot token)
-BOT_TOKEN = "6751940696:AAFz_8qF6sI24EJzU3sv367eMkcjVJsBlTU"
+BOT_TOKEN = "7195510626:AAHdF4spBrcmWPPx9-1gogU1yKM1Rs5qe-s"
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Proxy configuration
